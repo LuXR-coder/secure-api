@@ -21,7 +21,7 @@ jobs:
       - name: SAST - Bandit scan
         run: bandit -r . -x venv
 
-      - name: SCA - Safety scan (锁定2.x版本，不会登录、不会编码报错！！)
+      - name: SCA - Safety scan
         run: |
           pip install "safety<3.0"
           safety check -r requirements.txt --full-report
