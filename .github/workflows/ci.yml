@@ -24,7 +24,7 @@ jobs:
       - name: SCA - Safety scan
         run: |
           pip install "safety<3.0"
-          safety check -r requirements.txt --full-report
+          safety check --full-report
 
 
 
