@@ -35,7 +35,7 @@ jobs:
 
       # SCA依赖漏洞扫描（Safety）
       - name: Run SCA (Safety)
-        run: safety check --full-report --output safety-report.txt || true
+        run: safety check --full-report --output text > safety-report.txt || true
 
       # 上传扫描报告
       - name: Upload reports
