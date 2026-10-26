@@ -23,7 +23,7 @@ jobs:
 
       - name: SCA - Safety scan
         run: |
-          pip install "safety<3.0"
-          safety check -r requirements.txt --full-report
+          pip install "safety==2.3.5"
+          PYTHONUTF8=1 safety check -r requirements.txt --full-report
 
 
