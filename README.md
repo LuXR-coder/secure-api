@@ -228,4 +228,3 @@ After applying the configuration change and restarting the containers:
 4. Vulhub Official Repository: https://github.com/vulhub/vulhub
 5. NVD: https://nvd.nist.gov/
 6. Docker Documentation: https://docs.docker.com/
-```
