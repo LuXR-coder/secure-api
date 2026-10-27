@@ -24,7 +24,19 @@ jobs:
           pip install pip-audit
 
       - name: SAST - Bandit scan
-        run: bandit -r . -x venv
+        run: |
+          set -o pipefail
+          bandit -r . -x venv | tee bandit_report.txt
 
       - name: SCA - Pip Audit scan
-        run: pip-audit
+        run: |
+          set -o pipefail
+          pip-audit | tee pip_audit_report.txt
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            bandit_report.txt
+            pip_audit_report.txt
