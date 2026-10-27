@@ -1,12 +1,39 @@
 name: Security Scan
 on: [push, pull_request]
 
-# 注意：这里不再需要 FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 环境变量
 jobs:
   scan:
     runs-on: ubuntu-22.04
     steps:
-      # ... 前面的步骤保持不变 ...
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade setuptools
+          pip install -r requirements.txt
+          pip install pip-audit
+
+      - name: SAST - Bandit scan
+        run: bandit -r . -x venv
+
+      - name: SCA - Pip Audit scan
+        run: pip-audit
+
+      # ================= 新增：生成报告并上传 =================
+      - name: Generate JSON Security Reports
+        run: |
+          echo "Generating Bandit JSON report..."
+          bandit -r . -x venv -f json -o bandit_report.json || true
+          
+          echo "Generating Pip-Audit JSON report..."
+          pip-audit -f json -o pip_audit_report.json || true
 
       - name: Upload Security Reports
         uses: actions/upload-artifact@v6  # <-- 升级到 v6
