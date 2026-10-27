@@ -141,7 +141,7 @@ Scans all installed dependencies for known public CVE vulnerabilities against th
 ![SCA scan result](./images/sca_result.png)
 
 ### Latest Pipeline Run
-[Click to view the latest successful pipeline run](https://github.com/LuXR-coder/secure-api/actions/runs/40296993828)
+[Click to view the latest successful pipeline run](https://github.com/LuXR-coder/secure-api/actions/runs/40469469839/job/122072803251)
 
 ---
 
