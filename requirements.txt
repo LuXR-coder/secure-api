@@ -5,4 +5,3 @@ bcrypt
 markupsafe
 python-dotenv
 bandit
-safety<3.0
