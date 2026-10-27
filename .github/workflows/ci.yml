@@ -24,19 +24,41 @@ jobs:
           pip install pip-audit
 
       - name: SAST - Bandit scan
-        run: |
-          set -o pipefail
-          bandit -r . -x venv | tee bandit_report.txt
+        run: bandit -r . -x venv
 
       - name: SCA - Pip Audit scan
-        run: |
-          set -o pipefail
-          pip-audit | tee pip_audit_report.txt
+        run: pip-audit
 
-      - name: Upload security reports
+      # ================= 以下为新增的自动生成报告部分 =================
+
+      - name: Generate JSON Security Reports
+        # 重新跑一次扫描，但这次静默输出为 JSON 文件，使用 || true 防止因扫出漏洞而导致报错中断
+        run: |
+          echo "Generating Bandit JSON report..."
+          bandit -r . -x venv -f json -o bandit_report.json || true
+          
+          echo "Generating Pip-Audit JSON report..."
+          pip-audit -f json -o pip_audit_report.json || true
+
+      - name: Upload Security Reports as Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: security-reports
+          name: security-scan-reports
           path: |
-            bandit_report.txt
-            pip_audit_report.txt
+            bandit_report.json
+            pip_audit_report.json
+
+      - name: Add Reports to GitHub Step Summary
+        # 这段代码会自动把报告内容展示在 GitHub Actions 的网页界面上，非常好看
+        run: |
+          echo "## 🛡️ Security Scan Reports" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 🛡️ SAST - Bandit Results" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          head -n 50 bandit_report.json >> $GITHUB_STEP_SUMMARY || echo "No results."
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 📦 SCA - Pip-Audit Results" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          head -n 50 pip_audit_report.json >> $GITHUB_STEP_SUMMARY || echo "No results."
+          echo '```' >> $GITHUB_STEP_SUMMARY
