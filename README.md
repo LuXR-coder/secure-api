@@ -54,9 +54,48 @@ Protected endpoint. Returns user data list, **only accessible with valid JWT tok
 Note-taking endpoint designed for XSS protection demonstration.
 - **POST `/api/notes`**: Create a new note
   - Request Body: `{"content": "note content"}`
-  - Response: 201 Created with success message
+  - Response: 201 Created with `{"message": "note created"}`
 - **GET `/api/notes`**: List all notes
   - All user-submitted content is HTML-escaped before return to prevent XSS attacks.
+
+## API Testing Verification (Postman)
+All endpoints are fully tested via Postman to confirm both functionality and security controls work as designed.
+
+### 1. Login Endpoint Test
+- **Target:** Verify `/auth/login` issues a valid JWT token with correct credentials.
+- **Operation:** Send POST request with valid username and password in JSON body.
+- **Result:** Returns 200 OK with a signed bearer access token and expiration info.
+
+![Postman login success](./images/postman_login_success.png)
+
+### 2. Protected Endpoint Access with Valid Token
+- **Target:** Verify authorized users can access protected data.
+- **Operation:** Send GET request to `/api/data` with valid `Authorization: Bearer` header.
+- **Result:** Returns 200 OK with structured user data list.
+
+![Postman data with token](./images/postman_data_with_token.png)
+
+### 3. Protected Endpoint Access without Token
+- **Target:** Verify authentication enforcement blocks unauthenticated requests.
+- **Operation:** Send GET request to `/api/data` without Authorization header.
+- **Result:** Returns 401 Unauthorized with error message. JWT protection is active.
+
+![Postman data no token 401](./images/postman_data_no_token_401.png)
+
+### 4. XSS Protection Test - Submit Malicious Payload
+- **Target:** Verify user input is accepted and stored safely.
+- **Operation:** Submit `<script>alert(1)</script>` as note content via POST `/api/notes`.
+- **Result:** Returns 201 Created, note is saved successfully.
+
+![Postman XSS submit payload](./images/postman_xss_submit.png)
+
+### 5. XSS Protection Test - Escaped Output
+- **Target:** Verify returned content is properly HTML-escaped.
+- **Operation:** Retrieve notes list via GET `/api/notes`.
+- **Result:** Malicious script tags are converted to safe HTML entities (`&lt;script&gt;`), preventing JavaScript execution in the browser.
+
+![Postman XSS escaped output](./images/postman_xss_escaped.png)
+
 
 ---
 
